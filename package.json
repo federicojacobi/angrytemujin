@@ -1,0 +1,16 @@
+{
+	"name": "jssge",
+	"version": "1.0",
+	"description": "A simple, understandable, game engine for the browser",
+	"main": "src/index.js",
+	"scripts": {
+		"build": "node build.mjs",
+		"dev": "esbuild src/index.js --outdir=dev/js --bundle --watch --sourcemap --servedir=dev --loader:.png=dataurl --keep-names"
+	},
+	"dependencies": {
+		"adm-zip": "^0.5.10",
+		"behaviortree": "^3.0.0-beta.1",
+		"esbuild": "0.19.2",
+		"uglify-js": "^3.17.4"
+	}
+}
