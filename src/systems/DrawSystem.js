@@ -164,9 +164,9 @@ export default class DrawSystem extends System {
 
 		ctx.font = '10px sans-serif';
 		ctx.fillStyle = '#FF0000';
-		ctx.fillText( 'FPS: ' + this.scene.game.fps, this.canvas.width -40, 20 );
+		ctx.fillText( 'FPS: ' + this.scene.game.fps, this.canvas.width -40, 50 );
 
-		// ctx.fillText( `Sprites Drawn/Total: ${drawCalls} / ${entities.length}`, 10, 45 );
+		ctx.fillText( `Sprites Drawn/Total: ${drawCalls} / ${entities.length}`, 10, 50 );
 		if ( this.scene.player.components.has( PLAYER ) ) {
 			ctx.fillStyle = '#000000';
 			ctx.font = '14px sans-serif';

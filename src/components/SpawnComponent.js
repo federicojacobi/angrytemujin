@@ -1,7 +1,7 @@
 const SpawnComponent = function( args ) {
 	let config = {
 		currentTime: 0,
-		trigger: 600,
+		trigger: 100,
 		... args
 	};
 

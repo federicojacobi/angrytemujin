@@ -3,7 +3,7 @@ import './style.css';
 import Scene from './includes/Scene';
 import Game from './includes/Game';
 
-import TileSet1 from './assets/tileset_opt.png';
+import TileSet1 from './assets/tileset_opt_tiny.png';
 
 import BodyComponent from './components/BodyComponent';
 import KeyboardControlComponent from './components/KeyboardControlComponent';
@@ -279,7 +279,7 @@ class Scene1 extends Scene {
 		for ( let x = -1000; x < 11000; x = x + 16 ) {
 			for ( let y = -1000; y < 7000; y = y + 16 ) {
 				const maybeTile = rng();
-				if ( maybeTile < 0.05 ) {
+				if ( maybeTile < 0.2 ) {
 					let usableTiles;
 					if ( x < 4000 ) {
 						usableTiles = [ [2,0], [3,0],[4,0],[5,0] ];
