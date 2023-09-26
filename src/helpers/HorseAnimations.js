@@ -1,6 +1,6 @@
 import AnimationComponent from "../components/AnimationComponent"
 
-const HorseMoveRight = new AnimationComponent( {
+const HorseMoveRight = {
 	name: 'hr',
 	frames: [
 		{
@@ -20,8 +20,8 @@ const HorseMoveRight = new AnimationComponent( {
 			duration: 150
 		}
 	]
-} );
-const HorseMoveLeft = new AnimationComponent( {
+};
+const HorseMoveLeft = {
 	name: 'hl',
 	frames: [
 		{
@@ -41,8 +41,9 @@ const HorseMoveLeft = new AnimationComponent( {
 			duration: 150
 		}
 	]
-} );
-const IdleHorse = new AnimationComponent( {
+};
+
+const IdleHorse = {
 	name: 'hi',
 	frames: [
 		{
@@ -56,6 +57,6 @@ const IdleHorse = new AnimationComponent( {
 			duration: 500
 		}
 	]
-} )
+};
 
 export { IdleHorse, HorseMoveLeft, HorseMoveRight };

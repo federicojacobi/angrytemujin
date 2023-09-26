@@ -1,9 +1,11 @@
-const CameraComponent = function( width, height, focus ) {
-	this.width = width;
-	this.height = height;
-	this.focus = focus;
-	this.shakeX = 0;
-	this.shakeY = 0;
-	this.shaking = false;
+import { CAMERA } from "../helpers/Constants";
+
+export default CameraComponent = {
+	type: CAMERA,
+	width: 0,
+	height: 0,
+	focus: null,
+	shakeX: 0,
+	shakeY: 0,
+	shaking: false,
 }
-export default CameraComponent;

@@ -1,6 +1,6 @@
 import BodyComponent from "../components/BodyComponent";
 import EnemyComponent from "../components/EnemyComponent";
-import HealthComponent from "../components/HealthComponent";
+
 import PositionComponent from "../components/PositionComponent";
 import SpriteComponent from "../components/SpriteComponent";
 import AIComponent from "../components/AIComponent";

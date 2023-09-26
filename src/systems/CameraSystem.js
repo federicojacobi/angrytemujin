@@ -4,7 +4,7 @@ import System from "../includes/System";
 export default class CameraSystem extends System {
 	update( delta ) {
 		if ( ! this.cam ) {
-			this.cam = this.componentManager.query( e => e.components.has( CAMERA ) )[0];
+			this.cam = this.ecs.query( e => e.components.has( CAMERA ) )[0];
 		}
 		let entity = this.cam;
 		let position = entity.components.get( POSITION );

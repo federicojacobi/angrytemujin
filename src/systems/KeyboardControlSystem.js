@@ -1,4 +1,4 @@
-import { ANIMATION, ARCHER, BODY, BOTTOM, KEYBOARDCONTROL, LEFT, PROTECTOR, RIGHT, TOP } from "../helpers/Constants";
+import { ANIMATION, BODY, BOTTOM, KEYBOARDCONTROL, LEFT, RIGHT, TOP } from "../helpers/Constants";
 import { HorseMoveLeft, HorseMoveRight, IdleHorse } from "../helpers/HorseAnimations";
 import System from "../includes/System";
 
@@ -72,7 +72,7 @@ export default class KeyboardControlSystem extends System {
 	}
 
 	update( delta ) {
-		let entities = this.componentManager.query( e => e.components.has( KEYBOARDCONTROL ) && e.components.has( BODY ) )
+		let entities = this.ecs.query( e => e.components.has( KEYBOARDCONTROL ) && e.components.has( BODY ) )
 		entities.forEach( entity => {
 			let body = entity.components.get( BODY );
 			let currentAnim = this.scene.player.components.get( ANIMATION );
@@ -94,13 +94,13 @@ export default class KeyboardControlSystem extends System {
 					body.velocity.x = body.speed * -1;
 					body.facing = LEFT;
 					if ( entity == this.scene.player && currentAnim.name != 'hl' ) {
-						this.scene.player.components.set( ANIMATION, HorseMoveLeft );
+						Object.assign( currentAnim, HorseMoveLeft )
 						currentAnim.currentFrame = 0;
 						currentAnim.elapsed = 0;
 					}
 				} else {
 					if ( entity == this.scene.player && currentAnim.name != 'hr' ) {
-						this.scene.player.components.set( ANIMATION, HorseMoveRight );
+						Object.assign( currentAnim, HorseMoveRight );
 						currentAnim.currentFrame = 0;
 						currentAnim.elapsed = 0;
 					}
@@ -113,7 +113,7 @@ export default class KeyboardControlSystem extends System {
 
 			if ( entity == this.scene.player && body.velocity.x == 0 && body.velocity.y == 0 ) {
 				if ( currentAnim.name !== 'hi' ) {
-					this.scene.player.components.set( ANIMATION, IdleHorse );
+					Object.assign( currentAnim, IdleHorse );
 					currentAnim.currentFrame = 0;
 					currentAnim.elapsed = 0;
 				}

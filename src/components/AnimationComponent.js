@@ -1,18 +1,12 @@
 // Sequence of sprite configs
 
-const AnimationComponent = function( args ) {
-	let config = {
-		name: '',
-		currentFrame: 0,
-		elapsed: 0,
-		loop: true,
-		frames: [], // Sprite configs + duration in ms
-		... args
-	};
+import { ANIMATION } from "../helpers/Constants";
 
-	for ( const key in config ) {
-		this[key] = config[key];
-	}
-}
-
-export default AnimationComponent;
+export default AnimationComponent = {
+	type: ANIMATION,
+	name: '',
+	currentFrame: 0,
+	elapsed: 0,
+	loop: true,
+	frames: [], // Sprite configs + duration in ms
+};

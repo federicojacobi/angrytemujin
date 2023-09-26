@@ -3,7 +3,7 @@ import System from "../includes/System";
 
 export default class PhysicsSystem extends System {
 	update( delta ) {
-		let entities = this.componentManager.query( e => e.components.has( BODY ) && e.components.has( POSITION ) );
+		let entities = this.ecs.query( e => e.components.has( BODY ) && e.components.has( POSITION ) );
 		entities.forEach( entity => {
 			let component = entity.components;
 			let position = component.get( POSITION );

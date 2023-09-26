@@ -2,11 +2,12 @@ import './style.css';
 
 import Scene from './includes/Scene';
 import Game from './includes/Game';
+import ECS, { scaffold } from './includes/ECS';
 
 import TileSet1 from './assets/tileset_opt_tiny.png';
 
 import BodyComponent from './components/BodyComponent';
-import KeyboardControlComponent from './components/KeyboardControlComponent';
+
 import SpriteComponent from './components/SpriteComponent';
 // import AnimationComponent from './components/AnimationComponent';
 import CameraComponent from './components/CameraComponent';
@@ -18,13 +19,13 @@ import DrawSystem from './systems/DrawSystem';
 // import GLDrawSystem from './systems/GLDrawSystem';
 import KeyboardControlSystem from './systems/KeyboardControlSystem';
 import PositionComponent from './components/PositionComponent';
-import PlayerComponent from './components/PlayerComponent';
+
 import SpawnComponent from './components/SpawnComponent';
 import SpawnSystem from './systems/SpawnSystem';
 import CameraSystem from './systems/CameraSystem';
 import CirclesWeaponComponent from './components/CirclesWeaponComponent';
 import CircleAroundSystem from './systems/CircleAroundSystem';
-import HealthComponent from './components/HealthComponent';
+
 import DamageComponent from './components/DamageComponent';
 import DamageSystem from './systems/DamageSystem';
 import InvulnerableSystem from './systems/InvunerableSystem';
@@ -37,7 +38,7 @@ import { Random } from './includes/MathHelpers';
 import { IdleHorse } from './helpers/HorseAnimations';
 import SelfDestructSystem from './systems/SelfDestructSystem';
 import TextComponent from './components/TextComponent';
-import FriendComponent from './components/FriendComponent';
+
 import BTComponent from './components/BTComponent';
 import AnimationComponent from './components/AnimationComponent';
 import SelfDestructComponent from './components/SelfDestructComponent';
@@ -45,111 +46,156 @@ import { ANIMATION, ARCHER, BODY, BTREE, CAMERA, CIRCLESWEAPON, DAMAGE, ENEMY, F
 import InvulnerableComponent from './components/InvulnerableComponent';
 
 
+const ecs = new ECS();
+scaffold.setup( ecs );
 class Scene1 extends Scene {
 	preload() {
 		this.load( 'tileset1', 'image', TileSet1 );
 	}
 
+	registerComponents() {
+		ecs.registerComponent( { type: KEYBOARDCONTROL } );
+		ecs.registerComponent( {
+			type: FRIEND,
+			level: 1,
+			kind: PROTECTOR,
+		} );
+		ecs.registerComponent( {
+			type: PLAYER,
+			status: 1, // 1 alive, 0 dead
+			level: 1,
+			nextLevel: 1,
+			exp: 0,
+			maxUnits: 1,
+			units: [],
+		} );
+		ecs.registerComponent( {
+			type: POSITION,
+			x: 0,
+			y: 0,
+			originX: 0,
+			originY: 0,
+		} );
+		ecs.registerComponent( SpriteComponent );
+		ecs.registerComponent( CameraComponent );
+		ecs.registerComponent( BodyComponent );
+		ecs.registerComponent( AnimationComponent );
+		ecs.registerComponent( {
+			type: HEALTH,
+			max: 100,
+			current: 100
+		} );
+	}
+
 	create() {
+		this.registerComponents();
+
 		this.createMap();
 
-		let playerEntity = this.entityManager.getNextEntity()
-			.addComponent( KEYBOARDCONTROL, new KeyboardControlComponent() )
-			.addComponent( PLAYER, new PlayerComponent() )
-			.addComponent( FRIEND, new FriendComponent() )
-			.addComponent( POSITION, new PositionComponent( 5000, 1000 ) )
-			.addComponent( ANIMATION, IdleHorse )
-			.addComponent( HEALTH, new HealthComponent() )
-			.addComponent( BODY, new BodyComponent( {
-				width: 16,
-				height: 16,
-				speed: 150,
-			} ) )
-			.addComponent( SPRITE, new SpriteComponent( {
-				key: 'tileset1',
-				width: 24,
-				height: 16,
-				displayWidth: 24,
-				displayHeight: 16,
-				originX: 24,
-				originY: 16,
-				depth: 20,
-			} ) )
-			;
+		scaffold.create()
+		.addComponent( KEYBOARDCONTROL )
+		.addComponent( PLAYER )
+		.addComponent( FRIEND )
+		.addComponent( POSITION, { x: 5000, y: 1000 } )
+		.addComponent( ANIMATION, IdleHorse )
+		.addComponent( HEALTH )
+		.addComponent( BODY, {
+			width: 16,
+			height: 16,
+			speed: 150,
+		} )
+		.addComponent( SPRITE, {
+			key: 'tileset1',
+			width: 24,
+			height: 16,
+			displayWidth: 24,
+			displayHeight: 16,
+			originX: 24,
+			originY: 16,
+			depth: 20,
+		} );
+
+		let playerEntity = scaffold.entity;
 
 		this.player = playerEntity;
 
-		this.weapon = this.entityManager.getNextEntity()
-			.addComponent( CIRCLESWEAPON, new CirclesWeaponComponent( Math.PI, 40, playerEntity ) )
-			.addComponent( POSITION, new PositionComponent() )
-			.addComponent( DAMAGE, new DamageComponent( 15 ) )
-			.addComponent( KNOCKBACK, new KnockbackComponent( 10 ) )
-			.addComponent( SPRITE, new SpriteComponent( {
-				key: 'tileset1',
-				width: 16,
-				height: 16,
-				displayWidth: 16,
-				displayHeight: 16,
-				originX: 16 * 4,
-				originY: 16 * 4,
-				depth: 15
-			} ) )
-			;
+		// this.weapon = this.entityManager.getNextEntity()
+		// 	.addComponent( CIRCLESWEAPON, new CirclesWeaponComponent( Math.PI, 40, playerEntity ) )
+		// 	.addComponent( POSITION, new PositionComponent() )
+		// 	.addComponent( DAMAGE, new DamageComponent( 15 ) )
+		// 	.addComponent( KNOCKBACK, new KnockbackComponent( 10 ) )
+		// 	.addComponent( SPRITE, new SpriteComponent( {
+		// 		key: 'tileset1',
+		// 		width: 16,
+		// 		height: 16,
+		// 		displayWidth: 16,
+		// 		displayHeight: 16,
+		// 		originX: 16 * 4,
+		// 		originY: 16 * 4,
+		// 		depth: 15
+		// 	} ) )
+		// 	;
 
-		this.camera = this.entityManager.getNextEntity()
-			.addComponent( CAMERA, new CameraComponent( 640, 480, playerEntity ) )
-			.addComponent( BODY, new BodyComponent() )
-			.addComponent( POSITION, new PositionComponent() );
-
-		let spawn = this.entityManager.getNextEntity()
-			.addComponent( SPAWN, new SpawnComponent() );
-
-		this.systemManager.add( new KeyboardControlSystem( this ) );
-		this.systemManager.add( new AISystem( this ) );
-		this.systemManager.add( new BTSystem( this, playerEntity ) );
-		this.systemManager.add( new PlayerSystem( this ) );
-		this.systemManager.add( new SpawnSystem( this ) );
-		this.systemManager.add( new InvulnerableSystem( this ) );
-		this.systemManager.add( new DamageSystem( this ) )
-		.on( 'friendKilled', ( entity ) => {
-			if ( this.player == entity ) return;
-			let playerComponent = this.player.components.get( PLAYER );
-			let index = playerComponent.units.indexOf( entity );
-			
-			if ( index > -1 && playerComponent ) {
-				playerComponent.units.splice( index, 1 );
-			}
-
-
-			if ( entity == this.player ) {
-				this.emit( 'PlayerDead' );
-			}
-
+		scaffold.create()
+		.addComponent( CAMERA, {
+			width: 640,
+			height: 480,
+			focus: playerEntity
 		} )
-		.on( 'entityKilled', ( entity ) => {
-			if ( this.player == entity ) {
-				this.handleDeath();
-				return;
-			};
+		.addComponent( POSITION )
+		.addComponent( BODY );
 
-			let playerComponent = this.player.components.get( PLAYER );
+		this.camera = scaffold.entity;
 
-			// Create a new friendly unit
-			if ( playerComponent.units.length == playerComponent.maxUnits || Math.random() > 0.2 ) {
-				return;
-			}
+		// let spawn = this.entityManager.getNextEntity()
+		// 	.addComponent( SPAWN, new SpawnComponent() );
 
-			const types = [ PROTECTOR, ARCHER ];
-			// const types = [ ARCHER ];
-			this.createFriendlyUnit( types[ Math.floor( Math.random() * types.length ) ], entity.components.get( POSITION ) );
-		} );
+		ecs.addSystem( new KeyboardControlSystem( this ) );
+		// this.systemManager.add( new AISystem( this ) );
+		// this.systemManager.add( new BTSystem( this, playerEntity ) );
+		// this.systemManager.add( new PlayerSystem( this ) );
+		// this.systemManager.add( new SpawnSystem( this ) );
+		// this.systemManager.add( new InvulnerableSystem( this ) );
+		// this.systemManager.add( new DamageSystem( this ) )
+		// .on( 'friendKilled', ( entity ) => {
+		// 	if ( this.player == entity ) return;
+		// 	let playerComponent = this.player.components.get( PLAYER );
+		// 	let index = playerComponent.units.indexOf( entity );
+			
+		// 	if ( index > -1 && playerComponent ) {
+		// 		playerComponent.units.splice( index, 1 );
+		// 	}
 
-		this.systemManager.add( new CircleAroundSystem( this ) );
-		this.systemManager.add( new PhysicsSystem( this ) );
-		this.systemManager.add( new AnimationSystem( this ) );
-		this.systemManager.add( new CameraSystem( this ) );
-		this.systemManager.add( new SelfDestructSystem() );
-		this.systemManager.add( new DrawSystem( this, {
+
+		// 	if ( entity == this.player ) {
+		// 		this.emit( 'PlayerDead' );
+		// 	}
+
+		// } )
+		// .on( 'entityKilled', ( entity ) => {
+		// 	if ( this.player == entity ) {
+		// 		this.handleDeath();
+		// 		return;
+		// 	};
+
+		// 	let playerComponent = this.player.components.get( PLAYER );
+
+		// 	// Create a new friendly unit
+		// 	if ( playerComponent.units.length == playerComponent.maxUnits || Math.random() > 0.2 ) {
+		// 		return;
+		// 	}
+
+		// 	const types = [ PROTECTOR, ARCHER ];
+		// 	// const types = [ ARCHER ];
+		// 	this.createFriendlyUnit( types[ Math.floor( Math.random() * types.length ) ], entity.components.get( POSITION ) );
+		// } );
+
+		// this.systemManager.add( new CircleAroundSystem( this ) );
+		ecs.addSystem( new PhysicsSystem( this ) );
+		ecs.addSystem( new AnimationSystem( this ) );
+		ecs.addSystem( new CameraSystem( this ) );
+		// this.systemManager.add( new SelfDestructSystem() );
+		ecs.addSystem( new DrawSystem( this, {
 		// this.systemManager.add( new GLDrawSystem( this, {
 			width: this.game.config.width,
 			height: this.game.config.height
@@ -291,9 +337,9 @@ class Scene1 extends Scene {
 
 					let thisTile = usableTiles[ Math.round( rng() * ( usableTiles.length - 1 ) ) ];
 
-					let tree = this.entityManager.getNextEntity()
-						.addComponent( POSITION, new PositionComponent( x, y ) )
-						.addComponent( SPRITE, new SpriteComponent( {
+					scaffold.create()
+						.addComponent( POSITION, { x: x, y: y } )
+						.addComponent( SPRITE, {
 							key: 'tileset1',
 							width: 16,
 							height: 16,
@@ -302,14 +348,14 @@ class Scene1 extends Scene {
 							originX: 16 * thisTile[0],
 							originY: 16 * thisTile[1],
 							depth: 1,
-						} ) )
-						;
+						} );
 				}
 			}
 		}
 	}
 
 	update( delta ) {
+		ecs.update( delta );
 		super.update( delta );
 	}
 }

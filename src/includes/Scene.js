@@ -1,6 +1,3 @@
-import ComponentManager from "./ComponentManager";
-import EntityManager from "./EntityManager";
-import SystemManager from "./SystemManager";
 
 function lerp( start_value, end_value, pct ) {
     return ( start_value + (end_value - start_value) * pct );
@@ -8,9 +5,6 @@ function lerp( start_value, end_value, pct ) {
 
 export default class Scene {
 	constructor( game ) {
-		this.entityManager = new EntityManager();
-		this.componentManager = new ComponentManager( this.entityManager );
-		this.systemManager = new SystemManager( this.componentManager );
 
 		this.game = game;
 
@@ -59,14 +53,10 @@ export default class Scene {
 
 	update( delta, timestamp ) {
 		this.processTweens( delta );
-		this.systemManager.update( delta );
 	}
 
 	postupdate( delta, timestamp ) {}
 
 	destroy() {
-		this.entityManager.destroy();
-		this.componentManager.destroy();
-		this.systemManager.destroy();
 	}
 }

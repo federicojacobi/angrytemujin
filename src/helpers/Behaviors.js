@@ -2,12 +2,11 @@ import { FAILURE, RUNNING, SUCCESS, Task } from "../includes/BehaviorTree";
 
 import { BODY, BOTTOM, DAMAGE, ENEMY, LEFT, PLAYER, POSITION, RIGHT, SELFDESTRUCT, SPRITE, TOP } from "./Constants";
 import { distanceBetweenPoints, normalizeVector } from "../includes/MathHelpers";
-import PositionComponent from "../components/PositionComponent";
+
 import BodyComponent from "../components/BodyComponent";
 import SelfDestructComponent from "../components/SelfDestructComponent";
 import SpriteComponent from "../components/SpriteComponent";
 import DamageComponent from "../components/DamageComponent";
-import HealthComponent from "../components/HealthComponent";
 
 export class playerInRange extends Task {
 	run( blackboard ) {

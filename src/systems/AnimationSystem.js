@@ -7,7 +7,7 @@ export default class AnimationSystem extends System {
 	}
 
 	update( delta ) {
-		this.componentManager.query( e => e.components.has( ANIMATION ) ).forEach( entity => {
+		this.ecs.query( e => e.components.has( ANIMATION ) ).forEach( entity => {
 			let state = entity.components.get( ANIMATION );
 			let sprite = entity.components.get( SPRITE );
 

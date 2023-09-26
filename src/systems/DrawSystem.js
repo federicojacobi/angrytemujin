@@ -2,14 +2,6 @@ import { CAMERA, HEALTH, PLAYER, POSITION, SPRITE, TEXT } from "../helpers/Const
 import System from "../includes/System";
 
 export default class DrawSystem extends System {
-	constructor( scene, config ) {
-		super( scene );
-
-		this.config = {
-			...config
-		};
-	}
-
 	init() {
 
 		this.canvas = document.createElement( 'canvas' );
@@ -35,7 +27,7 @@ export default class DrawSystem extends System {
 		let drawCalls = 0;
 
 		if ( ! this.camera ) {
-			this.camera = this.componentManager.query( e => e.components.has( CAMERA ) )[0];
+			this.camera = this.ecs.query( e => e.components.has( CAMERA ) )[0];
 		}
 
 		let camPosition = this.camera.components.get( POSITION );
@@ -44,7 +36,7 @@ export default class DrawSystem extends System {
 		let camEdgeTop = camPosition.y - ( this.canvas.height / 2 ) - 40;
 		let camEdgeBottom = camPosition.y + ( this.canvas.height / 2 ) + 40;
 
-		let entities = this.componentManager.query( e => e.components.has( SPRITE ) );
+		let entities = this.ecs.query( e => e.components.has( SPRITE ) );
 		
 		// ctx.globalCompositeOperation = 'multiply';
 		// Culling
@@ -109,6 +101,7 @@ export default class DrawSystem extends System {
 				sprite.displayHeight
 				);
 			ctx.setTransform( 1, 0, 0, 1, 0, 0 );
+			drawCalls++;
 			
 			ctx.setTransform( 1, 0, 0, 1, Math.round( position.x - camPosition.x + ( this.canvas.width / 2 ) ), Math.round( position.y - camPosition.y + ( this.canvas.height / 2 ) ) ); // sets scale and origin
 			let hp = component.get( HEALTH );
@@ -126,7 +119,7 @@ export default class DrawSystem extends System {
 			ctx.setTransform( 1, 0, 0, 1, 0, 0 );
 		} );
 
-		let textEntities = this.componentManager.query( e => e.components.has( TEXT ) && e.components.has( POSITION ) );
+		let textEntities = this.ecs.query( e => e.components.has( TEXT ) && e.components.has( POSITION ) );
 		textEntities.forEach( entity => {
 			let position = entity.components.get( POSITION );
 			let text = entity.components.get( TEXT );

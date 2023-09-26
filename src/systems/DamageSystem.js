@@ -7,7 +7,7 @@ import DamageComponent from "../components/DamageComponent";
 import PositionComponent from "../components/PositionComponent";
 import TextComponent from "../components/TextComponent";
 import SelfDestructComponent from "../components/SelfDestructComponent";
-import FriendComponent from "../components/FriendComponent";
+
 import SpriteComponent from "../components/SpriteComponent";
 import AnimationComponent from "../components/AnimationComponent";
 import { BODY, DAMAGE, ENEMY, FRIEND, HEALTH, INVULNERABLE, KNOCKBACK, PLAYER, POSITION, SELFDESTRUCT, SPRITE, TEXT } from "../helpers/Constants";

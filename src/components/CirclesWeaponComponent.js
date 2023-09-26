@@ -1,4 +1,4 @@
-import { Entity } from "../includes/EntityManager";
+import { Entity } from "../includes/Entity";
 
 /**
  * 
