@@ -6,8 +6,6 @@ export default BodyComponent = {
 	height: 16,
 	speed: 0,
 	facing: RIGHT,
-	velocity: {
-		x: 0,
-		y: 0
-	}
+	vx: 0,
+	vy: 0,
 };

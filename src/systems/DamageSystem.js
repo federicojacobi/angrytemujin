@@ -1,33 +1,40 @@
 import System from "../includes/System";
-import InvulnerableComponent from "../components/InvulnerableComponent";
 import {normalizeVector} from "../includes/MathHelpers";
-import BTComponent from "../components/BTComponent";
-import KnockbackComponent from "../components/KnockbackComponent";
-import DamageComponent from "../components/DamageComponent";
-import PositionComponent from "../components/PositionComponent";
-import TextComponent from "../components/TextComponent";
-import SelfDestructComponent from "../components/SelfDestructComponent";
 
 import SpriteComponent from "../components/SpriteComponent";
-import AnimationComponent from "../components/AnimationComponent";
-import { BODY, DAMAGE, ENEMY, FRIEND, HEALTH, INVULNERABLE, KNOCKBACK, PLAYER, POSITION, SELFDESTRUCT, SPRITE, TEXT } from "../helpers/Constants";
+
+import { BODY, DAMAGE, ENEMY, FRIEND, HEALTH, INVULNERABLE, KEYBOARDCONTROL, KNOCKBACK, PLAYER, POSITION, SELFDESTRUCT, SPRITE, TEXT } from "../helpers/Constants";
 
 export default class DamageSystem extends System {
+	constructor( scene ) {
+		super( scene );
+		
+		this.damageEntitiesQuery = e => e.components.has( DAMAGE );
+		this.enemiesQuery = e => e.components.has( ENEMY ) && e.components.has( HEALTH );
+		this.friendsQuery = e => e.components.has( FRIEND );
+	}
 
 	createDamageLabel( entity, damageTaken ) {
-		let position = entity.components.get( POSITION );
-		let label = this.entityManager.getNextEntity();
-		label.addComponent( TEXT, new TextComponent( {
-			text: damageTaken,
-			color: '#FF0000',
-			font: '8px sans-serif'
-		}) )
-		.addComponent( POSITION, new PositionComponent( position.x, position.y ) )
-		.addComponent( SELFDESTRUCT, new SelfDestructComponent( 500 ) );
+		const position = entity.components.get( POSITION );
+
+		const label = this.ecs.getNextEntity();
+		const text = this.ecs.getNextComponent( TEXT );
+		text.text = damageTaken;
+		text.color = '#FF0000';
+		text.font = '8px sans-serif';
+
+		const labelPos = this.ecs.getNextComponent( POSITION );
+		labelPos.x = position.x;
+		labelPos.y = position.y;
+
+		const selfDestruct = this.ecs.getNextComponent( SELFDESTRUCT );
+		selfDestruct.ttl = 500;
+
+		this.ecs.addComponent( label, [ text, labelPos, selfDestruct ] );
 
 		this.scene.addTween( {
 			duration: 500,
-			target: label.components.get( POSITION ),
+			target: labelPos,
 			property: 'y',
 			startValue: position.y,
 			endValue: position.y - 10
@@ -35,9 +42,9 @@ export default class DamageSystem extends System {
 	}
 
 	update( delta ) {
-		let damageEntities = this.componentManager.query( e => e.components.has( DAMAGE ) );
-		let enemies = this.componentManager.query( e => e.components.has( ENEMY ) && e.components.has( HEALTH ) );
-		let friends = this.componentManager.query( e => e.components.has( FRIEND ) );
+		let damageEntities = this.ecs.query( this.damageEntitiesQuery );
+		let enemies = this.ecs.query( this.enemiesQuery );
+		let friends = this.ecs.query( this.friendsQuery );
 
 		// Check friends being hit by enemies.
 		enemies.forEach( enemyEntity => {
@@ -46,6 +53,7 @@ export default class DamageSystem extends System {
 
 			friends.forEach( ( friendEntity, index ) => {
 				// Not excluded in query because this state can change after the query
+				// Example: being hit by another enemy.
 				if ( friendEntity.components.has( INVULNERABLE ) ) {
 					return;
 				}
@@ -62,13 +70,17 @@ export default class DamageSystem extends System {
 				{
 					let hp = friendEntity.components.get( HEALTH );
 					hp.current -= enemyEntity.components.get( ENEMY ).damageOnHit;
+
 					this.createDamageLabel( friendEntity, enemyEntity.components.get( ENEMY ).damageOnHit );
 
 					if ( hp.current <= 0 ) {
+						hp.current = 0;
 						friends.splice( index, 1 );
 						this.killEntity( friendEntity );
 					} else {
-						friendEntity.addComponent( INVULNERABLE, new InvulnerableComponent( 500 ) );
+						const invul = this.ecs.getNextComponent( INVULNERABLE );
+						invul.duration = 500;
+						this.ecs.addComponent( friendEntity, invul );
 					}
 				}
 			} );
@@ -101,7 +113,10 @@ export default class DamageSystem extends System {
 							enemies.splice( index, 1 );
 							this.killEntity( entity );
 						} else {
-							entity.addComponent( INVULNERABLE, new InvulnerableComponent( 1000 ) );
+							const invul = this.ecs.getNextComponent( INVULNERABLE );
+							invul.duration = 1000;
+							this.ecs.addComponent( entity, invul );
+
 							if ( damageEntityComponents.has( KNOCKBACK ) ) {
 								// Calculate knockback
 								let playerPosition = this.scene.player.components.get( POSITION );
@@ -138,7 +153,9 @@ export default class DamageSystem extends System {
 		}
 
 		// BLOOD
-		this.entityManager.getNextEntity().addComponent( SPRITE, new SpriteComponent( {
+		const blood = this.ecs.getNextEntity();
+		const spriteComponent = this.ecs.getNextComponent( SPRITE );
+		Object.assign( spriteComponent, {
 			key: 'tileset1',
 			width: 8,
 			height: 8,
@@ -147,14 +164,24 @@ export default class DamageSystem extends System {
 			displayWidth: 8,
 			displayHeight: 8,
 			depth: 1
-		} ) )
-		.addComponent( POSITION, entity.components.get( POSITION ) );
+		} );
+
+		const entityPos = entity.components.get( POSITION );
+		const positionComponent = this.ecs.getNextComponent( POSITION );
+		positionComponent.x = entityPos.x;
+		positionComponent.y = entityPos.y;
+
+		this.ecs.addComponent( blood, [ spriteComponent, positionComponent ] );
 
 		if ( entity.components.has( FRIEND ) ) {
 			this.emit( 'friendKilled', entity );
 		}
 		this.emit( 'entityKilled', entity );
 
-		this.entityManager.kill( entity );
+		if ( entity === this.scene.player ) {
+			this.ecs.removeComponent( entity, [ FRIEND, KEYBOARDCONTROL ] );
+		} else {
+			this.ecs.killEntity( entity );
+		}
 	}
 }

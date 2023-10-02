@@ -42,6 +42,9 @@ export default class ECS {
 		this.entities = [];
 		this.entityPool = [];
 
+		this.dirtyEntities = [];
+		this.dirtyComponents = [];
+
 		this.queries = new Map();
 		this.blueprint = new Map();
 		this.componentPool = new Map();
@@ -62,26 +65,7 @@ export default class ECS {
 	}
 
 	killEntity( entity ) {
-		const removed = this.entities.splice( this.entities.indexOf( entity ), 1 )[0];
-		removed.components.forEach( component => {
-			this.killComponent( component );
-		} );
-
-		removed.components.clear();
-		this.entityPool.push( removed );
-
-		const queries = this.queries.keys();
-		console.log( 'KILL ENTITY' );
-		for ( const query of queries ) {
-			const results = this.queries.get( query );
-			const index = results.indexOf( entity );
-
-			if ( index > -1 ) {
-				console.log( 'CLEAR QUERY', query );
-				this.queries.delete( query );
-				// results.splice( index, 1 ); // splice is too slow
-			}
-		}
+		this.dirtyEntities.push( entity );
 	}
 
 	registerComponent( c ) {
@@ -108,7 +92,6 @@ export default class ECS {
 			entity.components.delete( components );
 		}
 
-		this.updateQueries( entity );
 		return this;
 	}
 
@@ -120,49 +103,16 @@ export default class ECS {
 		} else {
 			entity.components.set( components.type, components );
 		}
-		
-		this.updateQueries( entity );
+
 		return this;
 	}
 
-	updateQueries( entity ) {
-		const queries = this.queries.keys();
-		for ( const query of queries ) {
-			const results = this.queries.get( query );
-			const index = results.indexOf( entity );
-
-			if ( query( entity ) ) {
-				if ( index === - 1 ) {
-					results.push( entity );
-				}
-			} else {
-				if ( index > -1 ) {
-					console.log( 'CLEAR QUERY', query );
-					this.queries.delete( query );
-					// results.splice( index, 1 );
-				}
-			}
-		}
-	}
-
 	killComponent( component ) {
-		if ( ! this.componentPool.has( component.type ) ) {
-			this.componentPool.set( component.type, [] );
-		}
-
-		this.componentPool.get( component.type ).push( component );
+		this.dirtyComponents.push( component );
 	}
 
 	query( fn ) {
-		if ( this.queries.has( fn ) ) {
-			return this.queries.get( fn );
-		}
-
-		const results = this.entities.filter( fn );
-
-		this.queries.set( fn, results );
-
-		return results;
+		return this.entities.filter( fn );;
 	}
 
 	addSystem( system ) {
@@ -176,7 +126,30 @@ export default class ECS {
 		throw new Error( 'This system already exists' );
 	}
 
+	cleanup() {
+		while ( this.dirtyEntities.length > 0 ) {
+			const entity = this.dirtyEntities.pop();
+			const removed = this.entities.splice( this.entities.indexOf( entity ), 1 )[0];
+			removed.components.forEach( component => {
+				this.killComponent( component );
+			} );
+	
+			removed.components.clear();
+			this.entityPool.push( removed );
+		}
+
+		while ( this.dirtyComponents.length > 0 ) {
+			const component  = this.dirtyComponents.pop();
+			if ( ! this.componentPool.has( component.type ) ) {
+				this.componentPool.set( component.type, [] );
+			}
+	
+			this.componentPool.get( component.type ).push( component );
+		}
+	}
+
 	update( args ) {
 		this.systems.forEach( system => system.update( args ) );
+		this.cleanup();
 	}
 }

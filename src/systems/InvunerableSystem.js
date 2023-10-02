@@ -1,17 +1,19 @@
-import InvulnerableComponent from "../components/InvulnerableComponent";
 import { INVULNERABLE } from "../helpers/Constants";
 import System from "../includes/System";
 
 export default class InvulnerableSystem extends System {
+	constructor( scene ) {
+		super( scene );
+		this.query = e => e.components.has( INVULNERABLE );
+	}
 
 	update( delta ) {
-		this.componentManager.query( e => e.components.has( INVULNERABLE ) ).forEach( entity => {
-			let components = entity.components;
-			const timer = components.get( INVULNERABLE );
-			if ( timer.accumulator < timer.max ) {
+		this.ecs.query( this.query ).forEach( entity => {
+			const timer = entity.components.get( INVULNERABLE );
+			if ( timer.accumulator < timer.duration ) {
 				timer.accumulator += delta;
 			} else {
-				entity.components.delete( INVULNERABLE );
+				this.ecs.removeComponent( entity, INVULNERABLE );
 			}
 		} );
 	}

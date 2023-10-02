@@ -1,7 +1,13 @@
-import { CAMERA, HEALTH, PLAYER, POSITION, SPRITE, TEXT } from "../helpers/Constants";
+import { BODY, CAMERA, HEALTH, PLAYER, POSITION, SPRITE, TEXT } from "../helpers/Constants";
 import System from "../includes/System";
 
 export default class DrawSystem extends System {
+	constructor( scene ) {
+		super( scene );
+		this.cameraQuery = e => e.components.has( CAMERA );
+		this.spriteQuery = e => e.components.has( SPRITE );
+		this.textQuery = e => e.components.has( TEXT ) && e.components.has( POSITION );
+	}
 	init() {
 
 		this.canvas = document.createElement( 'canvas' );
@@ -27,7 +33,7 @@ export default class DrawSystem extends System {
 		let drawCalls = 0;
 
 		if ( ! this.camera ) {
-			this.camera = this.ecs.query( e => e.components.has( CAMERA ) )[0];
+			this.camera = this.ecs.query( this.cameraQuery )[0];
 		}
 
 		let camPosition = this.camera.components.get( POSITION );
@@ -36,7 +42,7 @@ export default class DrawSystem extends System {
 		let camEdgeTop = camPosition.y - ( this.canvas.height / 2 ) - 40;
 		let camEdgeBottom = camPosition.y + ( this.canvas.height / 2 ) + 40;
 
-		let entities = this.ecs.query( e => e.components.has( SPRITE ) );
+		let entities = this.ecs.query( this.spriteQuery );
 		
 		// ctx.globalCompositeOperation = 'multiply';
 		// Culling
@@ -84,11 +90,13 @@ export default class DrawSystem extends System {
 
 			// ctx.rotate( body.angle );
 			
+			
 			// if ( component.has( 'DebugTextComponent' ) ) {
 			// 	ctx.strokeRect( -body.width * body.originX, -body.height * body.originY, body.width, body.height );
 			// }
 			
 			let image = this.scene.game.resourceManager.get( sprite.key );
+
 			ctx.drawImage(
 				image, 
 				sprite.originX,
@@ -115,11 +123,16 @@ export default class DrawSystem extends System {
 				}
 				// ctx.fillText( `${hp.current}/${hp.max}`, 0, 25 );
 			}
-
+			if ( entity === this.scene.player ) {
+				ctx.textAlign = 'center';
+				ctx.fillStyle = '#FF0000';
+				ctx.font = '10px sans-serif';
+				ctx.fillText( `${parseInt( position.x ) }x${parseInt( position.y )}`, 0, 0 );
+			}
 			ctx.setTransform( 1, 0, 0, 1, 0, 0 );
 		} );
 
-		let textEntities = this.ecs.query( e => e.components.has( TEXT ) && e.components.has( POSITION ) );
+		let textEntities = this.ecs.query( this.textQuery );
 		textEntities.forEach( entity => {
 			let position = entity.components.get( POSITION );
 			let text = entity.components.get( TEXT );
@@ -137,24 +150,26 @@ export default class DrawSystem extends System {
 		// LOCATION NAME
 		ctx.fillStyle = 'rgba(0,0,0,0.15)';
 		ctx.fillRect( 0, 0, this.canvas.width, 40 );
-		let playerPos = this.scene.player.components.get(POSITION);
-		let region;
-		if ( playerPos.x < 4000 ) {
-			region = 'DUNHUANG';
-		} else if ( playerPos.x > 4000 && playerPos.x < 7000 ) {
-			region = 'DELUN BOLDOG';
-		} else {
-			region = 'BEIJING';
+		let playerPos = this.scene.player.components.get( POSITION );
+		if ( playerPos ) {
+			let region;
+			if ( playerPos.x < 4000 ) {
+				region = 'DUNHUANG';
+			} else if ( playerPos.x > 4000 && playerPos.x < 7000 ) {
+				region = 'DELUN BOLDOG';
+			} else {
+				region = 'BEIJING';
+			}
+			ctx.fillStyle = '#000000';
+			ctx.font = '14px sans-serif';
+			ctx.textAlign = 'center';
+			ctx.fillText( region, this.canvas.width / 2, 20 );
+
+			// Location
+			ctx.textAlign = 'left';
+			ctx.fillText( `${Math.round( playerPos.x / 10 )}x${Math.round( playerPos.y / 10 ) }`, this.canvas.width - 60, 20 );
 		}
-		ctx.fillStyle = '#000000';
-		ctx.font = '14px sans-serif';
-		ctx.textAlign = 'center';
-		ctx.fillText( region, this.canvas.width / 2, 20 );
-
-		// Location
-		ctx.textAlign = 'left';
-		ctx.fillText( `${Math.round( playerPos.x / 10 )}x${Math.round( playerPos.y / 10 ) }`, this.canvas.width - 60, 20 );
-
+		
 		ctx.font = '10px sans-serif';
 		ctx.fillStyle = '#FF0000';
 		ctx.fillText( 'FPS: ' + this.scene.game.fps, this.canvas.width -40, 50 );

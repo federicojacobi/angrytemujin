@@ -11,6 +11,8 @@ export default class GLDrawSystem extends System {
 		};
 
 		this.textures = new Map();
+		this.cameraQuery = e => e.components.has( CAMERA );
+		this.spriteQuery = e => e.components.has( SPRITE );
 	}
 
 	init() {
@@ -33,7 +35,7 @@ export default class GLDrawSystem extends System {
 		this.tc.cls();
 
 		if ( ! this.camera ) {
-			this.camera = this.componentManager.query( e => e.components.has( CAMERA ) )[0];
+			this.camera = this.ecs.query( this.cameraQuery )[0];
 		}
 
 		let camPosition = this.camera.components.get( POSITION );
@@ -42,7 +44,7 @@ export default class GLDrawSystem extends System {
 		let camEdgeTop = camPosition.y - ( this.canvas.height / 2 ) - 40;
 		let camEdgeBottom = camPosition.y + ( this.canvas.height / 2 ) + 40;
 
-		let entities = this.componentManager.query( e => e.components.has( SPRITE ) );
+		let entities = this.ecs.query( this.spriteQuery );
 		entities.sort( ( a, b ) => {
 			return a.components.get( SPRITE ).depth - b.components.get( SPRITE ).depth
 		} );

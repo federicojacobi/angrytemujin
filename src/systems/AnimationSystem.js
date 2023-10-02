@@ -4,10 +4,11 @@ import System from "../includes/System";
 export default class AnimationSystem extends System {
 	constructor( scene, config ) {
 		super( scene );
+		this.query = e => e.components.has( ANIMATION );
 	}
 
 	update( delta ) {
-		this.ecs.query( e => e.components.has( ANIMATION ) ).forEach( entity => {
+		this.ecs.query( this.query ).forEach( entity => {
 			let state = entity.components.get( ANIMATION );
 			let sprite = entity.components.get( SPRITE );
 

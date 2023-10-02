@@ -2,48 +2,40 @@ import './style.css';
 
 import Scene from './includes/Scene';
 import Game from './includes/Game';
-import ECS, { scaffold } from './includes/ECS';
+// import ECS, { scaffold } from './includes/ECS';
+import ECS, { scaffold } from './includes/ECS-uncached';
+import { Random } from './includes/MathHelpers';
+import { IdleHorse } from './helpers/HorseAnimations';
+
 
 import TileSet1 from './assets/tileset_opt_tiny.png';
 
 import BodyComponent from './components/BodyComponent';
-
 import SpriteComponent from './components/SpriteComponent';
-// import AnimationComponent from './components/AnimationComponent';
 import CameraComponent from './components/CameraComponent';
+import PositionComponent from './components/PositionComponent';
+import CirclesWeaponComponent from './components/CirclesWeaponComponent';
+import DamageComponent from './components/DamageComponent';
+import TextComponent from './components/TextComponent';
+import BTComponent from './components/BTComponent';
+import AnimationComponent from './components/AnimationComponent';
+import { ANIMATION, ARCHER, BODY, BTREE, CAMERA, CIRCLESWEAPON, DAMAGE, DUMB_AI, ENEMY, FRIEND, HEALTH, INVULNERABLE, KEYBOARDCONTROL, KNOCKBACK, PLAYER, POSITION, PROTECTOR, SELFDESTRUCT, SPAWN, SPRITE, TEXT } from './helpers/Constants';
 
-
-// import AnimationSystem from './systems/AnimationSystem';
+import SelfDestructSystem from './systems/SelfDestructSystem';
+import KeyboardControlSystem from './systems/KeyboardControlSystem';
+import CircleAroundSystem from './systems/CircleAroundSystem';
+import BTSystem from './systems/BTSystem';
 import PhysicsSystem from './systems/PhysicsSystem';
 import DrawSystem from './systems/DrawSystem';
 // import GLDrawSystem from './systems/GLDrawSystem';
-import KeyboardControlSystem from './systems/KeyboardControlSystem';
-import PositionComponent from './components/PositionComponent';
-
-import SpawnComponent from './components/SpawnComponent';
 import SpawnSystem from './systems/SpawnSystem';
 import CameraSystem from './systems/CameraSystem';
-import CirclesWeaponComponent from './components/CirclesWeaponComponent';
-import CircleAroundSystem from './systems/CircleAroundSystem';
-
-import DamageComponent from './components/DamageComponent';
 import DamageSystem from './systems/DamageSystem';
+import DebugSystem from './systems/DebugSystem';
 import InvulnerableSystem from './systems/InvunerableSystem';
 import AISystem from './systems/EnemyAISystem';
 import AnimationSystem from './systems/AnimationSystem';
 import PlayerSystem from './systems/PlayerSystem';
-import KnockbackComponent from './components/KnockbackComponent';
-import BTSystem from './systems/BTSystem';
-import { Random } from './includes/MathHelpers';
-import { IdleHorse } from './helpers/HorseAnimations';
-import SelfDestructSystem from './systems/SelfDestructSystem';
-import TextComponent from './components/TextComponent';
-
-import BTComponent from './components/BTComponent';
-import AnimationComponent from './components/AnimationComponent';
-import SelfDestructComponent from './components/SelfDestructComponent';
-import { ANIMATION, ARCHER, BODY, BTREE, CAMERA, CIRCLESWEAPON, DAMAGE, ENEMY, FRIEND, HEALTH, INVULNERABLE, KEYBOARDCONTROL, KNOCKBACK, PLAYER, POSITION, PROTECTOR, SELFDESTRUCT, SPAWN, SPRITE, TEXT } from './helpers/Constants';
-import InvulnerableComponent from './components/InvulnerableComponent';
 
 
 const ecs = new ECS();
@@ -55,6 +47,7 @@ class Scene1 extends Scene {
 
 	registerComponents() {
 		ecs.registerComponent( { type: KEYBOARDCONTROL } );
+		ecs.registerComponent( { type: 'debug' } );
 		ecs.registerComponent( {
 			type: FRIEND,
 			level: 1,
@@ -76,10 +69,46 @@ class Scene1 extends Scene {
 			originX: 0,
 			originY: 0,
 		} );
+		ecs.registerComponent( {
+			type: KNOCKBACK,
+			force: 20
+		} );
+
+		ecs.registerComponent( {
+			type: ENEMY,
+			level: 1,
+			damageOnHit: 4
+		} );
+
+		ecs.registerComponent( {
+			type: INVULNERABLE,
+			duration: 1000,
+			accumulator: 0
+		} );
+
+		ecs.registerComponent( {
+			type: SPAWN,
+			currentTime: 0,
+			trigger: 2000,
+		} );
+
+		ecs.registerComponent( {
+			type: SELFDESTRUCT,
+			ttl: 0,
+			current: 0,
+		} );
+
+		ecs.registerComponent( {
+			type: DUMB_AI,
+			focus: null
+		} );
+		ecs.registerComponent( CirclesWeaponComponent );
+		ecs.registerComponent( DamageComponent );
 		ecs.registerComponent( SpriteComponent );
 		ecs.registerComponent( CameraComponent );
 		ecs.registerComponent( BodyComponent );
 		ecs.registerComponent( AnimationComponent );
+		ecs.registerComponent( TextComponent );
 		ecs.registerComponent( {
 			type: HEALTH,
 			max: 100,
@@ -88,6 +117,7 @@ class Scene1 extends Scene {
 	}
 
 	create() {
+		this.enemyQuery = (e) => e.components.has( ENEMY );
 		this.registerComponents();
 
 		this.createMap();
@@ -98,7 +128,7 @@ class Scene1 extends Scene {
 		.addComponent( FRIEND )
 		.addComponent( POSITION, { x: 5000, y: 1000 } )
 		.addComponent( ANIMATION, IdleHorse )
-		.addComponent( HEALTH )
+		.addComponent( HEALTH, { max: 5, current: 5 } )
 		.addComponent( BODY, {
 			width: 16,
 			height: 16,
@@ -114,27 +144,33 @@ class Scene1 extends Scene {
 			originY: 16,
 			depth: 20,
 		} );
+		// .addComponent( 'debug' );
 
 		let playerEntity = scaffold.entity;
-
 		this.player = playerEntity;
 
-		// this.weapon = this.entityManager.getNextEntity()
-		// 	.addComponent( CIRCLESWEAPON, new CirclesWeaponComponent( Math.PI, 40, playerEntity ) )
-		// 	.addComponent( POSITION, new PositionComponent() )
-		// 	.addComponent( DAMAGE, new DamageComponent( 15 ) )
-		// 	.addComponent( KNOCKBACK, new KnockbackComponent( 10 ) )
-		// 	.addComponent( SPRITE, new SpriteComponent( {
-		// 		key: 'tileset1',
-		// 		width: 16,
-		// 		height: 16,
-		// 		displayWidth: 16,
-		// 		displayHeight: 16,
-		// 		originX: 16 * 4,
-		// 		originY: 16 * 4,
-		// 		depth: 15
-		// 	} ) )
-		// 	;
+		scaffold.create()
+		.addComponent( CIRCLESWEAPON, {
+			rotationSpeed: Math.PI,
+			distance: 40,
+			accumulator: 0,
+			target: playerEntity
+		} )
+		.addComponent( POSITION )
+		.addComponent( DAMAGE )
+		.addComponent( KNOCKBACK, { force: 10 } )
+		.addComponent( SPRITE, {
+			key: 'tileset1',
+			width: 16,
+			height: 16,
+			displayWidth: 16,
+			displayHeight: 16,
+			originX: 16 * 4,
+			originY: 16 * 4,
+			depth: 15
+		} );
+
+		this.weapon = scaffold.entity;
 
 		scaffold.create()
 		.addComponent( CAMERA, {
@@ -147,60 +183,62 @@ class Scene1 extends Scene {
 
 		this.camera = scaffold.entity;
 
-		// let spawn = this.entityManager.getNextEntity()
-		// 	.addComponent( SPAWN, new SpawnComponent() );
-
+		let spawn = ecs.getNextEntity();
+		ecs.addComponent( spawn, ecs.getNextComponent( SPAWN ) );
+		
 		ecs.addSystem( new KeyboardControlSystem( this ) );
-		// this.systemManager.add( new AISystem( this ) );
-		// this.systemManager.add( new BTSystem( this, playerEntity ) );
-		// this.systemManager.add( new PlayerSystem( this ) );
-		// this.systemManager.add( new SpawnSystem( this ) );
-		// this.systemManager.add( new InvulnerableSystem( this ) );
-		// this.systemManager.add( new DamageSystem( this ) )
-		// .on( 'friendKilled', ( entity ) => {
-		// 	if ( this.player == entity ) return;
-		// 	let playerComponent = this.player.components.get( PLAYER );
-		// 	let index = playerComponent.units.indexOf( entity );
-			
-		// 	if ( index > -1 && playerComponent ) {
-		// 		playerComponent.units.splice( index, 1 );
-		// 	}
-
-
-		// 	if ( entity == this.player ) {
-		// 		this.emit( 'PlayerDead' );
-		// 	}
-
-		// } )
-		// .on( 'entityKilled', ( entity ) => {
-		// 	if ( this.player == entity ) {
-		// 		this.handleDeath();
-		// 		return;
-		// 	};
-
-		// 	let playerComponent = this.player.components.get( PLAYER );
-
-		// 	// Create a new friendly unit
-		// 	if ( playerComponent.units.length == playerComponent.maxUnits || Math.random() > 0.2 ) {
-		// 		return;
-		// 	}
-
-		// 	const types = [ PROTECTOR, ARCHER ];
-		// 	// const types = [ ARCHER ];
-		// 	this.createFriendlyUnit( types[ Math.floor( Math.random() * types.length ) ], entity.components.get( POSITION ) );
-		// } );
-
-		// this.systemManager.add( new CircleAroundSystem( this ) );
 		ecs.addSystem( new PhysicsSystem( this ) );
 		ecs.addSystem( new AnimationSystem( this ) );
 		ecs.addSystem( new CameraSystem( this ) );
-		// this.systemManager.add( new SelfDestructSystem() );
+
+		ecs.addSystem( new AISystem( this ) );
+		// this.systemManager.add( new BTSystem( this, playerEntity ) );
+		ecs.addSystem( new PlayerSystem( this ) );
+		ecs.addSystem( new SpawnSystem( this ) );
+		ecs.addSystem( new InvulnerableSystem( this ) );
+		ecs.addSystem( new CircleAroundSystem( this ) );
+		ecs.addSystem( new DamageSystem( this ) )
+		.on( 'friendKilled', ( entity ) => {
+			if ( this.player == entity ) return;
+			let playerComponent = this.player.components.get( PLAYER );
+			let index = playerComponent.units.indexOf( entity );
+			
+			if ( index > -1 && playerComponent ) {
+				playerComponent.units.splice( index, 1 );
+			}
+
+
+			if ( entity == this.player ) {
+				this.emit( 'PlayerDead' );
+			}
+
+		} )
+		.on( 'entityKilled', ( entity ) => {
+			if ( this.player == entity ) {
+				this.handleDeath();
+				return;
+			};
+
+			// let playerComponent = this.player.components.get( PLAYER );
+
+			// // Create a new friendly unit
+			// if ( playerComponent.units.length == playerComponent.maxUnits || Math.random() > 0.2 ) {
+			// 	return;
+			// }
+
+			// const types = [ PROTECTOR, ARCHER ];
+			// // const types = [ ARCHER ];
+			// this.createFriendlyUnit( types[ Math.floor( Math.random() * types.length ) ], entity.components.get( POSITION ) );
+		} );
+		
+		ecs.addSystem( new SelfDestructSystem() );
 		ecs.addSystem( new DrawSystem( this, {
 		// this.systemManager.add( new GLDrawSystem( this, {
 			width: this.game.config.width,
 			height: this.game.config.height
 		} ) )
 		;
+		ecs.addSystem( new DebugSystem( this ) );
 	}
 
 	createFriendlyUnit( type = 0, position ) {
@@ -293,30 +331,44 @@ class Scene1 extends Scene {
 	}
 
 	handleDeath() {
-		this.componentManager.query( (e) => e.components.has( ENEMY ) ).forEach( e => e.components.delete( ENEMY ) );
-		this.player.components.get( PLAYER ).status = 0;
-		this.entityManager.getNextEntity()
-		.addComponent( POSITION, new PositionComponent( this.player.components.get(POSITION).x, this.player.components.get(POSITION).y - 60 ) )
-		.addComponent( TEXT, new TextComponent( {
+		ecs.removeComponent( this.player, [ FRIEND, KEYBOARDCONTROL ] );
+
+		// this.ecs.query( this.enemyQuery ).forEach( e => e.components.delete( ENEMY ) );
+		
+		scaffold.create()
+		.addComponent( POSITION, {
+			x: this.player.components.get(POSITION).x,
+			y: this.player.components.get(POSITION).y - 60
+		} )
+		.addComponent( TEXT, {
 			text: 'Game Over',
 			textAlign: 'center',
 			font: '40px sans-serif'
-		} ) );
-		this.entityManager.getNextEntity()
-		.addComponent( POSITION, new PositionComponent( this.player.components.get(POSITION).x , this.player.components.get(POSITION).y - 30) )
-		.addComponent( TEXT, new TextComponent( {
+		} );
+
+		scaffold.create()
+		.addComponent( POSITION, {
+			x: this.player.components.get(POSITION).x,
+			y: this.player.components.get(POSITION).y - 30
+		} )
+		.addComponent( TEXT, {
 			text: 'The great Genghis Khan doesn\'t die like this.',
 			textAlign: 'center',
 			font: '24px sans-serif'
-		} ) );
-		this.entityManager.getNextEntity()
-		.addComponent( POSITION, new PositionComponent( this.player.components.get(POSITION).x, this.player.components.get(POSITION).y + 30) )
-		.addComponent( TEXT, new TextComponent( {
+		} );
+
+		scaffold.create()
+		.addComponent( POSITION, {
+			x: this.player.components.get(POSITION).x,
+			y: this.player.components.get(POSITION).y + 30
+		} )
+		.addComponent( TEXT, {
 			text: 'Reload the page to restart',
 			textAlign: 'center',
 			font: '24px sans-serif'
-		} ) );
-		this.entityManager.kill( this.weapon );
+		} );
+
+		ecs.killEntity( this.weapon );
 	}
 
 	createMap() {

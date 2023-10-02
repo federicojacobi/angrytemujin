@@ -1,15 +1,9 @@
-const TextComponent = function( args ) {
-	const def = {
-		text: '',
-		textAlign: 'left',
-		color: '#000000',
-		font: '8px sans-serif',
-		...args
-	};
+import { TEXT } from "../helpers/Constants";
 
-	for ( const [key, value] of Object.entries( def ) ) {
-		this[key] = value;
-	}
+export default TextComponent = {
+	type: TEXT,
+	text: '',
+	textAlign: 'left',
+	color: '#000000',
+	font: '8px sans-serif',
 };
-
-export default TextComponent;

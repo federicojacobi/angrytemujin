@@ -2,8 +2,12 @@ import { CIRCLESWEAPON, POSITION } from "../helpers/Constants";
 import System from "../includes/System";
 
 export default class CircleAroundSystem extends System {
+	constructor( scene ) {
+		super( scene );
+		this.query =  e => e.components.has( CIRCLESWEAPON );
+	}
 	update( delta ) {
-		this.componentManager.query( e => e.components.has( CIRCLESWEAPON ) ).forEach( entity => {
+		this.ecs.query( this.query ).forEach( entity => {
 			let components = entity.components;
 			let circle = components.get( CIRCLESWEAPON );
 			let position = components.get( POSITION );

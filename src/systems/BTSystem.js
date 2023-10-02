@@ -12,6 +12,7 @@ export default class BTSystem extends System {
 	constructor( scene, entity ) {
 		super( scene );
 		this.player = entity;
+		this.query = e => e.components.has( BTREE );
 	}
 
 	/**
@@ -87,7 +88,7 @@ export default class BTSystem extends System {
 	}
 
 	update( delta ) {
-		this.componentManager.query( e => e.components.has( BTREE ) ).forEach( entity => {
+		this.ecs.query( this.query ).forEach( entity => {
 			let btComponent = entity.components.get( BTREE );
 			if ( ! btComponent.btree ) {
 				this.createBTree( entity );

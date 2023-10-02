@@ -1,16 +1,14 @@
-import BodyComponent from "../components/BodyComponent";
-import EnemyComponent from "../components/EnemyComponent";
-
-import PositionComponent from "../components/PositionComponent";
-import SpriteComponent from "../components/SpriteComponent";
-import AIComponent from "../components/AIComponent";
 import System from "../includes/System";
-import AnimationComponent from "../components/AnimationComponent";
+
 import { ANIMATION, BODY, CAMERA, DUMB_AI, ENEMY, HEALTH, PLAYER, POSITION, SPAWN, SPRITE } from "../helpers/Constants";
 
 export default class SpawnSystem extends System {
+	constructor( scene ) {
+		super( scene );
+		this.query = e => e.components.has( SPAWN );
+	}
 	update( delta ) {
-		this.componentManager.query( e => e.components.has( SPAWN ) ).forEach( entity => {
+		this.ecs.query( this.query ).forEach( entity => {
 			let timer = entity.components.get( SPAWN );
 
 			if ( timer.currentTime < timer.trigger ) {
@@ -48,39 +46,52 @@ export default class SpawnSystem extends System {
 						spawnY = cameraPosition.y + 32 + cameraSize.height / 2;
 						break;
 				}
-				
-				let enemy = this.entityManager.getNextEntity()
-					.addComponent( POSITION, new PositionComponent( spawnX, spawnY ) )
-					.addComponent( BODY, new BodyComponent() )
-					.addComponent( HEALTH, new HealthComponent( 10, 10 ) )
-					.addComponent( ENEMY, new EnemyComponent() )
-					.addComponent( DUMB_AI, new AIComponent( this.scene.player ) )
-					.addComponent( SPRITE, new SpriteComponent( {
-						key: 'tileset1',
-						width: 16,
-						height: 16,
-						displayWidth: 16,
-						displayHeight: 16,
-						originX: 16 * 0,
+
+				const position = this.ecs.getNextComponent( POSITION );
+				position.x = spawnX;
+				position.y = spawnY;
+
+				const body = this.ecs.getNextComponent( BODY );
+
+				const hp = this.ecs.getNextComponent( HEALTH );
+				hp.current = 10;
+				hp.max = 10;
+
+				const _enemyComponent = this.ecs.getNextComponent( ENEMY );
+
+				const dumbAI = this.ecs.getNextComponent( DUMB_AI );
+				dumbAI.focus = this.scene.player;
+
+				const sprite = this.ecs.getNextComponent( SPRITE );
+				Object.assign( sprite, {
+					key: 'tileset1',
+					width: 16,
+					height: 16,
+					displayWidth: 16,
+					displayHeight: 16,
+					originX: 16 * 0,
+					originY: 16 * 4,
+					scale: 1,
+					depth: 10
+				} );
+
+				const anim = this.ecs.getNextComponent( ANIMATION );
+				anim.name = 'spear';
+				anim.frames = [
+					{
+						originX: 0,
 						originY: 16 * 4,
-						scale: 1,
-						depth: 10
-					} ) )
-					.addComponent( ANIMATION, new AnimationComponent( {
-						name: 'spear',
-						frames: [
-							{
-								originX: 0,
-								originY: 16 * 4,
-								duration: 200
-							},
-							{
-								originX: 16,
-								originY: 16 * 4,
-								duration: 200
-							}
-						]
-					} ) );
+						duration: 200
+					},
+					{
+						originX: 16,
+						originY: 16 * 4,
+						duration: 200
+					}
+				];
+
+				let enemy = this.ecs.getNextEntity();
+				this.ecs.addComponent( enemy, [ position, body, hp, _enemyComponent, sprite, anim, dumbAI ] );
 			}
 		} );
 	}

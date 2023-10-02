@@ -4,7 +4,6 @@ import { BODY, BOTTOM, DAMAGE, ENEMY, LEFT, PLAYER, POSITION, RIGHT, SELFDESTRUC
 import { distanceBetweenPoints, normalizeVector } from "../includes/MathHelpers";
 
 import BodyComponent from "../components/BodyComponent";
-import SelfDestructComponent from "../components/SelfDestructComponent";
 import SpriteComponent from "../components/SpriteComponent";
 import DamageComponent from "../components/DamageComponent";
 
