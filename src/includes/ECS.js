@@ -42,6 +42,9 @@ export default class ECS {
 		this.entities = [];
 		this.entityPool = [];
 
+		this.dirtyEntities = [];
+		this.dirtyComponents = [];
+
 		this.queries = new Map();
 		this.blueprint = new Map();
 		this.componentPool = new Map();
@@ -62,26 +65,7 @@ export default class ECS {
 	}
 
 	killEntity( entity ) {
-		const removed = this.entities.splice( this.entities.indexOf( entity ), 1 )[0];
-		removed.components.forEach( component => {
-			this.killComponent( component );
-		} );
-
-		removed.components.clear();
-		this.entityPool.push( removed );
-
-		const queries = this.queries.keys();
-		console.log( 'KILL ENTITY' );
-		for ( const query of queries ) {
-			const results = this.queries.get( query );
-			const index = results.indexOf( entity );
-
-			if ( index > -1 ) {
-				console.log( 'CLEAR QUERY', query );
-				this.queries.delete( query );
-				// results.splice( index, 1 ); // splice is too slow
-			}
-		}
+		this.dirtyEntities.push( entity );
 	}
 
 	registerComponent( c ) {
@@ -103,12 +87,15 @@ export default class ECS {
 		if ( Array.isArray( components ) ) {
 			components.forEach( component => {
 				entity.components.delete( component );
+				this.dirtyComponents.push( component );
 			} );
 		} else {
 			entity.components.delete( components );
+			this.dirtyComponents.push( components );
 		}
 
 		this.updateQueries( entity );
+
 		return this;
 	}
 
@@ -137,20 +124,10 @@ export default class ECS {
 				}
 			} else {
 				if ( index > -1 ) {
-					console.log( 'CLEAR QUERY', query );
 					this.queries.delete( query );
-					// results.splice( index, 1 );
 				}
 			}
 		}
-	}
-
-	killComponent( component ) {
-		if ( ! this.componentPool.has( component.type ) ) {
-			this.componentPool.set( component.type, [] );
-		}
-
-		this.componentPool.get( component.type ).push( component );
 	}
 
 	query( fn ) {
@@ -176,7 +153,41 @@ export default class ECS {
 		throw new Error( 'This system already exists' );
 	}
 
+	cleanup() {
+		while ( this.dirtyEntities.length > 0 ) {
+			const entity = this.dirtyEntities.pop();
+			const removed = this.entities.splice( this.entities.indexOf( entity ), 1 )[0];
+			removed.components.forEach( component => {
+				this.dirtyComponents.push( component );
+			} );
+	
+			removed.components.clear();
+			this.entityPool.push( removed );
+
+			const queries = this.queries.keys();
+			for ( const query of queries ) {
+				const results = this.queries.get( query );
+				const index = results.indexOf( entity );
+
+				if ( index > -1 ) {
+					this.queries.delete( query );
+					// results.splice( index, 1 ); // splice is too slow
+				}
+			}
+		}
+
+		while ( this.dirtyComponents.length > 0 ) {
+			const component = this.dirtyComponents.pop();
+			if ( ! this.componentPool.has( component.type ) ) {
+				this.componentPool.set( component.type, [] );
+			}
+	
+			this.componentPool.get( component.type ).push( component );
+		}
+	}
+
 	update( args ) {
 		this.systems.forEach( system => system.update( args ) );
+		this.cleanup();
 	}
 }

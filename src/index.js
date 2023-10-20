@@ -2,8 +2,8 @@ import './style.css';
 
 import Scene from './includes/Scene';
 import Game from './includes/Game';
-// import ECS, { scaffold } from './includes/ECS';
-import ECS, { scaffold } from './includes/ECS-uncached';
+import ECS, { scaffold } from './includes/ECS';
+// import ECS, { scaffold } from './includes/ECS-uncached';
 import { Random } from './includes/MathHelpers';
 import { IdleHorse } from './helpers/HorseAnimations';
 
@@ -13,7 +13,7 @@ import TileSet1 from './assets/tileset_opt_tiny.png';
 import BodyComponent from './components/BodyComponent';
 import SpriteComponent from './components/SpriteComponent';
 import CameraComponent from './components/CameraComponent';
-import PositionComponent from './components/PositionComponent';
+
 import CirclesWeaponComponent from './components/CirclesWeaponComponent';
 import DamageComponent from './components/DamageComponent';
 import TextComponent from './components/TextComponent';
