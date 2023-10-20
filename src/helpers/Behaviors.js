@@ -126,8 +126,8 @@ export class moveToLocation extends Task {
 
 		const body = blackboard.entity.components.get( BODY );
 
-		body.velocity.x = normalizedDirection.x * body.speed;
-		body.velocity.y = normalizedDirection.y * body.speed;
+		body.vx = normalizedDirection.x * body.speed;
+		body.vy = normalizedDirection.y * body.speed;
 
 		blackboard.distance = distanceBetweenPoints( tp.x, tp.y, entityPosition.x, entityPosition.y );
 		blackboard.startingPoint = {
@@ -156,8 +156,8 @@ export class moveToLocation extends Task {
 export class stopMoving extends Task {
 	start( blackboard ) {
 		let body = blackboard.entity.components.get( BODY );
-		body.velocity.x = 0;
-		body.velocity.y = 0;
+		body.vx = 0;
+		body.vy = 0;
 	}
 	run() {
 		return SUCCESS;
@@ -165,8 +165,12 @@ export class stopMoving extends Task {
 };
 
 export class findRandomEnemyInRange extends Task {
+	constructor() {
+		super();
+		this.query = e => e.components.has( ENEMY ) && e.components.has( POSITION );
+	}
 	start( blackboard ) {
-		blackboard.enemies = blackboard.system.componentManager.query( e => e.components.has( ENEMY ) );
+		blackboard.enemies = blackboard.ecs.query( this.query );
 	}
 
 	run( blackboard ) {
@@ -194,19 +198,23 @@ export class shootAtEnemy extends Task {
 		const origin = blackboard.entity.components.get( POSITION );
 		const target = blackboard.targetPosition;
 
-		const e = blackboard.system.entityManager.getNextEntity();
+		const e = blackboard.ecs.getNextEntity();
 		const normal = normalizeVector( target.x - origin.x, target.y - origin.y );
 
-		e.addComponent( POSITION, new PositionComponent( origin.x, origin.y ) )
-		.addComponent( DAMAGE, new DamageComponent( 15 ) )
-		.addComponent( BODY, new BodyComponent( {
-			speed: 300,
-			velocity: {
-				x: normal.x * 300,
-				y: normal.y * 300
-			},
-		} ) )
-		.addComponent( SPRITE, new SpriteComponent( {
+		const position = blackboard.ecs.getNextComponent( POSITION );
+		position.x = origin.x;
+		position.y = origin.y;
+
+		const dmg = blackboard.ecs.getNextComponent( DAMAGE );
+		dmg.baseDamage = 15;
+
+		const body = blackboard.ecs.getNextComponent( BODY );
+		body.speed = 300;
+		body.vx = normal.x * body.speed;
+		body.vy = normal.y * body.speed;
+
+		const sprite = blackboard.ecs.getNextComponent( SPRITE );
+		Object.assign( sprite, {
 			key: 'tileset1',
 			width: 16,
 			height: 16,
@@ -215,8 +223,13 @@ export class shootAtEnemy extends Task {
 			originX: 16 * 4,
 			originY: 16 * 5,
 			depth: 15
-		} ) )
-		.addComponent( SELFDESTRUCT, new SelfDestructComponent( 1000 ) )
+		} );
+
+		const selfdestruct = blackboard.ecs.getNextComponent( SELFDESTRUCT );
+		selfdestruct.ttl = 1000;
+
+		blackboard.ecs.addComponent( e, [ position, dmg, body, sprite, selfdestruct ] );
+
 		return SUCCESS;
 	}
 };

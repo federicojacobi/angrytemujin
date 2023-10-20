@@ -9,9 +9,9 @@ import { CooldownDecorator, InvertDecorator } from "../includes/BehaviorTree";
 
 
 export default class BTSystem extends System {
-	constructor( scene, entity ) {
+	constructor( scene ) {
 		super( scene );
-		this.player = entity;
+		this.player = scene.player;
 		this.query = e => e.components.has( BTREE );
 	}
 
@@ -23,7 +23,7 @@ export default class BTSystem extends System {
 	createBTree( entity ) {
 		let btComponent = entity.components.get( BTREE );
 		let tree;
-		switch ( btComponent.type ) {
+		switch ( btComponent.kind ) {
 			case PROTECTOR:
 				tree = new BehaviorTree( {
 					tree: new Selector( {
@@ -79,7 +79,7 @@ export default class BTSystem extends System {
 					blackboard: {
 						player: this.player,
 						entity: entity,
-						system: this
+						ecs: this.ecs
 					}
 				} );
 				break;

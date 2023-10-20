@@ -87,9 +87,11 @@ export default class ECS {
 		if ( Array.isArray( components ) ) {
 			components.forEach( component => {
 				entity.components.delete( component );
+				this.dirtyComponents.push( component );
 			} );
 		} else {
 			entity.components.delete( components );
+			this.dirtyComponents.push( components );
 		}
 
 		return this;
@@ -105,10 +107,6 @@ export default class ECS {
 		}
 
 		return this;
-	}
-
-	killComponent( component ) {
-		this.dirtyComponents.push( component );
 	}
 
 	query( fn ) {
@@ -131,7 +129,7 @@ export default class ECS {
 			const entity = this.dirtyEntities.pop();
 			const removed = this.entities.splice( this.entities.indexOf( entity ), 1 )[0];
 			removed.components.forEach( component => {
-				this.killComponent( component );
+				this.dirtyComponents.push( component );
 			} );
 	
 			removed.components.clear();
@@ -139,7 +137,7 @@ export default class ECS {
 		}
 
 		while ( this.dirtyComponents.length > 0 ) {
-			const component  = this.dirtyComponents.pop();
+			const component = this.dirtyComponents.pop();
 			if ( ! this.componentPool.has( component.type ) ) {
 				this.componentPool.set( component.type, [] );
 			}

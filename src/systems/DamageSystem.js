@@ -3,7 +3,7 @@ import {normalizeVector} from "../includes/MathHelpers";
 
 import SpriteComponent from "../components/SpriteComponent";
 
-import { BODY, DAMAGE, ENEMY, FRIEND, HEALTH, INVULNERABLE, KEYBOARDCONTROL, KNOCKBACK, PLAYER, POSITION, SELFDESTRUCT, SPRITE, TEXT } from "../helpers/Constants";
+import { BODY, DAMAGE, ENEMY, FRIEND, HEALTH, INVULNERABLE, KEYBOARDCONTROL, KNOCKBACK, PLAYER, POSITION, SELFDESTRUCT, SPRITE, TEXT, TWEEN } from "../helpers/Constants";
 
 export default class DamageSystem extends System {
 	constructor( scene ) {
@@ -29,16 +29,20 @@ export default class DamageSystem extends System {
 
 		const selfDestruct = this.ecs.getNextComponent( SELFDESTRUCT );
 		selfDestruct.ttl = 500;
+		selfDestruct.current = 0;
 
-		this.ecs.addComponent( label, [ text, labelPos, selfDestruct ] );
-
-		this.scene.addTween( {
+		const tween = this.ecs.getNextComponent( TWEEN );
+		Object.assign( tween, {
 			duration: 500,
+			elapsed: 0,
+			pct: 0,
 			target: labelPos,
 			property: 'y',
 			startValue: position.y,
 			endValue: position.y - 10
 		} );
+
+		this.ecs.addComponent( label, [ text, labelPos, selfDestruct, tween ] );
 	}
 
 	update( delta ) {

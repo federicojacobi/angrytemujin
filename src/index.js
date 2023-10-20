@@ -36,6 +36,8 @@ import InvulnerableSystem from './systems/InvunerableSystem';
 import AISystem from './systems/EnemyAISystem';
 import AnimationSystem from './systems/AnimationSystem';
 import PlayerSystem from './systems/PlayerSystem';
+import TweenComponent from './components/TweenComponent';
+import TweenSystem from './systems/TweenSystem';
 
 
 const ecs = new ECS();
@@ -89,7 +91,7 @@ class Scene1 extends Scene {
 		ecs.registerComponent( {
 			type: SPAWN,
 			currentTime: 0,
-			trigger: 2000,
+			trigger: 900,
 		} );
 
 		ecs.registerComponent( {
@@ -107,6 +109,7 @@ class Scene1 extends Scene {
 		ecs.registerComponent( SpriteComponent );
 		ecs.registerComponent( CameraComponent );
 		ecs.registerComponent( BodyComponent );
+		ecs.registerComponent( BTComponent );
 		ecs.registerComponent( AnimationComponent );
 		ecs.registerComponent( TextComponent );
 		ecs.registerComponent( {
@@ -114,6 +117,7 @@ class Scene1 extends Scene {
 			max: 100,
 			current: 100
 		} );
+		ecs.registerComponent( TweenComponent );
 	}
 
 	create() {
@@ -128,7 +132,7 @@ class Scene1 extends Scene {
 		.addComponent( FRIEND )
 		.addComponent( POSITION, { x: 5000, y: 1000 } )
 		.addComponent( ANIMATION, IdleHorse )
-		.addComponent( HEALTH, { max: 5, current: 5 } )
+		.addComponent( HEALTH, { max: 1000, current: 1000 } )
 		.addComponent( BODY, {
 			width: 16,
 			height: 16,
@@ -143,8 +147,9 @@ class Scene1 extends Scene {
 			originX: 24,
 			originY: 16,
 			depth: 20,
-		} );
-		// .addComponent( 'debug' );
+		} )
+		// .addComponent( 'debug' )
+		;
 
 		let playerEntity = scaffold.entity;
 		this.player = playerEntity;
@@ -192,7 +197,7 @@ class Scene1 extends Scene {
 		ecs.addSystem( new CameraSystem( this ) );
 
 		ecs.addSystem( new AISystem( this ) );
-		// this.systemManager.add( new BTSystem( this, playerEntity ) );
+		ecs.addSystem( new BTSystem( this ) );
 		ecs.addSystem( new PlayerSystem( this ) );
 		ecs.addSystem( new SpawnSystem( this ) );
 		ecs.addSystem( new InvulnerableSystem( this ) );
@@ -206,12 +211,6 @@ class Scene1 extends Scene {
 			if ( index > -1 && playerComponent ) {
 				playerComponent.units.splice( index, 1 );
 			}
-
-
-			if ( entity == this.player ) {
-				this.emit( 'PlayerDead' );
-			}
-
 		} )
 		.on( 'entityKilled', ( entity ) => {
 			if ( this.player == entity ) {
@@ -219,19 +218,19 @@ class Scene1 extends Scene {
 				return;
 			};
 
-			// let playerComponent = this.player.components.get( PLAYER );
+			let playerComponent = this.player.components.get( PLAYER );
 
-			// // Create a new friendly unit
-			// if ( playerComponent.units.length == playerComponent.maxUnits || Math.random() > 0.2 ) {
-			// 	return;
-			// }
+			// Create a new friendly unit
+			if ( playerComponent.units.length == playerComponent.maxUnits || Math.random() > 0.2 ) {
+				return;
+			}
 
-			// const types = [ PROTECTOR, ARCHER ];
-			// // const types = [ ARCHER ];
-			// this.createFriendlyUnit( types[ Math.floor( Math.random() * types.length ) ], entity.components.get( POSITION ) );
+			const types = [ PROTECTOR, ARCHER ];
+			this.createFriendlyUnit( types[ Math.floor( Math.random() * types.length ) ], entity.components.get( POSITION ) );
 		} );
 		
 		ecs.addSystem( new SelfDestructSystem() );
+		ecs.addSystem( new TweenSystem() );
 		ecs.addSystem( new DrawSystem( this, {
 		// this.systemManager.add( new GLDrawSystem( this, {
 			width: this.game.config.width,
@@ -242,23 +241,26 @@ class Scene1 extends Scene {
 	}
 
 	createFriendlyUnit( type = 0, position ) {
-		const newEntity = this.entityManager.getNextEntity();
-		newEntity.addComponent( BODY, new BodyComponent( {
+		scaffold.create()
+		.addComponent( BODY, {
 			speed: 100
-		}) )
-		.addComponent( HEALTH, new HealthComponent( this.player.components.get( HEALTH ).max * 0.1, this.player.components.get( HEALTH ).max * 0.1 ) )
-		.addComponent( INVULNERABLE, new InvulnerableComponent( 1000 ) )
-		.addComponent( POSITION, new PositionComponent( position.x, position.y ) );
+		} )
+		.addComponent( HEALTH, {
+			max: this.player.components.get( HEALTH ).max * 0.1,
+			current: this.player.components.get( HEALTH ).max * 0.1
+		} )
+		.addComponent( INVULNERABLE )
+		.addComponent( POSITION, { x: position.x, y: position.y } );
 
 		switch( type ) {
 			case PROTECTOR:
-				newEntity
-				.addComponent( BTREE, new BTComponent( PROTECTOR ) )
-				.addComponent( KNOCKBACK, new KnockbackComponent( 15 ) )
-				.addComponent( DAMAGE, new DamageComponent( this.player.components.get( PLAYER ).level * 5 ) )
-				.addComponent( FRIEND, new FriendComponent() )
-				.addComponent( ANIMATION, new AnimationComponent( {
-					name: '',
+				scaffold
+				.addComponent( BTREE, { kind: PROTECTOR } )
+				.addComponent( KNOCKBACK, { force: 15 } )
+				.addComponent( DAMAGE, { baseDamage: this.player.components.get( PLAYER ).level * 5 } )
+				.addComponent( FRIEND )
+				.addComponent( ANIMATION, {
+					name: 'prot',
 					frames: [
 						{
 							originX: 16 * 2,
@@ -271,8 +273,8 @@ class Scene1 extends Scene {
 							duration: 200
 						}
 					]
-				} ) )
-				.addComponent( SPRITE, new SpriteComponent( {
+				} )
+				.addComponent( SPRITE, {
 					key: 'tileset1',
 					width: 16,
 					height: 16,
@@ -281,14 +283,14 @@ class Scene1 extends Scene {
 					displayWidth: 16,
 					displayHeight: 16,
 					depth: 20
-				} ) );
+				} );
 				break;
 
 			case ARCHER:
-				newEntity
-				.addComponent( BTREE, new BTComponent( ARCHER ) )
-				.addComponent( FRIEND, new FriendComponent() )
-				.addComponent( ANIMATION, new AnimationComponent( {
+				scaffold
+				.addComponent( BTREE, { kind: ARCHER } )
+				.addComponent( FRIEND )
+				.addComponent( ANIMATION, {
 					name: '',
 					frames: [
 						{
@@ -302,8 +304,8 @@ class Scene1 extends Scene {
 							duration: 200
 						}
 					]
-				} ) )
-				.addComponent( SPRITE, new SpriteComponent( {
+				} )
+				.addComponent( SPRITE, {
 					key: 'tileset1',
 					width: 16,
 					height: 16,
@@ -312,33 +314,34 @@ class Scene1 extends Scene {
 					displayWidth: 16,
 					displayHeight: 16,
 					depth: 20
-				} ) );
+				} );
 				break;
 		}
 
-		this.player.components.get( PLAYER ).units.push( newEntity );
+		this.player.components.get( PLAYER ).units.push( scaffold.entity );
 
 		if ( Math.random() > 0.85 ) {
-			let label = this.entityManager.getNextEntity();
-			label.addComponent( TEXT, new TextComponent( {
+			scaffold.create()
+			.addComponent( TEXT, {
 				text: ['GLORY TO CHINGGIS KHAN!', 'I YIELD TO MY KHAN!', 'GENGHIS KHAN LIVES!'][ Math.floor( Math.random() * 3 ) ],
 				color: '#000000',
 				font: '10px sans-serif'
-			}) )
-			.addComponent( POSITION, new PositionComponent( position.x, position.y - 15 ) )
-			.addComponent( SELFDESTRUCT, new SelfDestructComponent( 2000 ) );
+			} )
+			.addComponent( POSITION, { x: position.x, y: position.y - 15 } )
+			.addComponent( SELFDESTRUCT, { ttl: 2000 } );
 		}
 	}
 
 	handleDeath() {
-		ecs.removeComponent( this.player, [ FRIEND, KEYBOARDCONTROL ] );
-
-		// this.ecs.query( this.enemyQuery ).forEach( e => e.components.delete( ENEMY ) );
+		ecs.removeComponent( this.player, [ FRIEND, KEYBOARDCONTROL, BODY, BTREE ] );
+		this.player.components.get( PLAYER ).units.forEach( unit => {
+			ecs.removeComponent( unit, [ BTREE ] );
+		} );
 		
 		scaffold.create()
 		.addComponent( POSITION, {
-			x: this.player.components.get(POSITION).x,
-			y: this.player.components.get(POSITION).y - 60
+			x: this.player.components.get( POSITION ).x,
+			y: this.player.components.get( POSITION ).y - 60
 		} )
 		.addComponent( TEXT, {
 			text: 'Game Over',
@@ -348,8 +351,8 @@ class Scene1 extends Scene {
 
 		scaffold.create()
 		.addComponent( POSITION, {
-			x: this.player.components.get(POSITION).x,
-			y: this.player.components.get(POSITION).y - 30
+			x: this.player.components.get( POSITION ).x,
+			y: this.player.components.get( POSITION ).y - 30
 		} )
 		.addComponent( TEXT, {
 			text: 'The great Genghis Khan doesn\'t die like this.',

@@ -44,7 +44,6 @@ export default class DrawSystem extends System {
 
 		let entities = this.ecs.query( this.spriteQuery );
 		
-		// ctx.globalCompositeOperation = 'multiply';
 		// Culling
 		entities.filter( entity => {
 			
@@ -90,11 +89,6 @@ export default class DrawSystem extends System {
 
 			// ctx.rotate( body.angle );
 			
-			
-			// if ( component.has( 'DebugTextComponent' ) ) {
-			// 	ctx.strokeRect( -body.width * body.originX, -body.height * body.originY, body.width, body.height );
-			// }
-			
 			let image = this.scene.game.resourceManager.get( sprite.key );
 
 			ctx.drawImage(
@@ -113,22 +107,24 @@ export default class DrawSystem extends System {
 			
 			ctx.setTransform( 1, 0, 0, 1, Math.round( position.x - camPosition.x + ( this.canvas.width / 2 ) ), Math.round( position.y - camPosition.y + ( this.canvas.height / 2 ) ) ); // sets scale and origin
 			let hp = component.get( HEALTH );
-			if ( hp ) {
-				if ( entity == this.scene.player ) {
-					ctx.strokeStyle = '#000000';
-					ctx.lineWidth = 1;
-					ctx.fillStyle = '#FF0000';
-					ctx.fillRect( -25, 20, Math.round( hp.current * 80 / hp.max ), 5 );
-					ctx.strokeRect( -25, 20, 80, 5 );
-				}
-				// ctx.fillText( `${hp.current}/${hp.max}`, 0, 25 );
-			}
-			if ( entity === this.scene.player ) {
-				ctx.textAlign = 'center';
+			if ( entity === this.scene.player && hp && hp.current > 0 ) {
+				ctx.strokeStyle = '#000000';
+				ctx.lineWidth = 1;
 				ctx.fillStyle = '#FF0000';
-				ctx.font = '10px sans-serif';
-				ctx.fillText( `${parseInt( position.x ) }x${parseInt( position.y )}`, 0, 0 );
+				ctx.fillRect( -25, 20, Math.round( hp.current * 80 / hp.max ), 5 );
+				ctx.strokeRect( -25, 20, 80, 5 );
+
+				// ctx.fillText( `${hp.current}/${hp.max}`, 0, 25 );
+
+				if ( component.has( 'debug' ) ) {
+					ctx.textAlign = 'center';
+					ctx.fillStyle = '#FF0000';
+					ctx.font = '10px sans-serif';
+					ctx.fillText( `${parseInt( position.x ) }x${parseInt( position.y )}`, 0, 0 );
+				}
+
 			}
+
 			ctx.setTransform( 1, 0, 0, 1, 0, 0 );
 		} );
 
@@ -170,11 +166,11 @@ export default class DrawSystem extends System {
 			ctx.fillText( `${Math.round( playerPos.x / 10 )}x${Math.round( playerPos.y / 10 ) }`, this.canvas.width - 60, 20 );
 		}
 		
-		ctx.font = '10px sans-serif';
-		ctx.fillStyle = '#FF0000';
-		ctx.fillText( 'FPS: ' + this.scene.game.fps, this.canvas.width -40, 50 );
+		// ctx.font = '10px sans-serif';
+		// ctx.fillStyle = '#FF0000';
+		// ctx.fillText( 'FPS: ' + this.scene.game.fps, this.canvas.width -40, 50 );
+		// ctx.fillText( `Sprites Drawn/Total: ${drawCalls} / ${entities.length}`, 10, 50 );
 
-		ctx.fillText( `Sprites Drawn/Total: ${drawCalls} / ${entities.length}`, 10, 50 );
 		if ( this.scene.player.components.has( PLAYER ) ) {
 			ctx.fillStyle = '#000000';
 			ctx.font = '14px sans-serif';
